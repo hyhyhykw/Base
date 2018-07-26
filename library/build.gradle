@@ -36,6 +36,9 @@ dependencies {
 
     api 'com.yanzhenjie:permission:2.0.0-rc4'
     api 'com.afollestad.material-dialogs:core:0.9.6.0'
+    
+    api 'org.greenrobot:eventbus:3.1.1'
+    api 'com.yanzhenjie:recyclerview-swipe:1.1.4'
 
     api "com.android.support:appcompat-v7:$support_version"
     api "com.android.support:recyclerview-v7:$support_version"
