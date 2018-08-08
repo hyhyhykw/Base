@@ -37,11 +37,6 @@ public interface BaseAppDelegate {
 
     String getAliyunAccessKeySecret();
 
-//融云
-//    String getRongAppKey();
-//
-//    String getRongAppSecret();
-
     //Aes
     String getAesCipherMode();
 
