@@ -1,7 +1,8 @@
 package com.hy.library;
 
 import android.content.Context;
-import android.util.DisplayMetrics;
+
+import com.hy.utils.SizeUtils;
 
 /**
  * Created time : 2018/7/26 11:39.
@@ -17,9 +18,9 @@ public class Base {
     public static void init(BaseAppDelegate delegate) {
         sDelegate = delegate;
 
-        DisplayMetrics displayMetrics = sDelegate.getContext().getResources().getDisplayMetrics();
-        screenWidth = displayMetrics.widthPixels;
-        screenHeight = displayMetrics.heightPixels;
+        screenWidth = SizeUtils.getScreenWidth(sDelegate.getContext());
+        screenHeight = SizeUtils.getScreenHeight(sDelegate.getContext());
+
     }
 
     public static BaseAppDelegate getDelegate() {

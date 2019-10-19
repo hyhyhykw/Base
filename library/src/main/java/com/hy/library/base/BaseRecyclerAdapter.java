@@ -1,31 +1,31 @@
 package com.hy.library.base;
 
-import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Interpolator;
-import android.view.animation.LinearInterpolator;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
 import com.hy.library.Base;
-import com.hy.library.utils.AppTool;
+import com.hy.library.utils.BaseUtils;
+import com.hy.utils.AppUtils;
+import com.hy.utils.LifecycleUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.recyclerview.widget.RecyclerView;
 import butterknife.ButterKnife;
-import butterknife.Unbinder;
+
 
 /**
  * Created time : 2018/4/3 11:05.
@@ -36,13 +36,7 @@ public abstract class BaseRecyclerAdapter<T, V extends BaseRecyclerAdapter.BaseV
 
     protected final List<T> mData = new ArrayList<>();
 
-    private final ArrayList<Unbinder> mUnbinders = new ArrayList<>();
-
     protected Context mContext;
-
-    protected static final Interpolator mInterpolator = new LinearInterpolator();
-    private int mLastPosition = -1;
-    protected long mDuration = 300L;
 
     public List<T> getData() {
         return mData;
@@ -52,8 +46,44 @@ public abstract class BaseRecyclerAdapter<T, V extends BaseRecyclerAdapter.BaseV
         toActivity(clazz, null);
     }
 
+
+    private RecyclerView.OnScrollListener mOnScrollListener = new RecyclerView.OnScrollListener() {
+
+        @Override
+        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+            if (!LifecycleUtils.canLoadImage(recyclerView.getContext())) return;
+            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                Fresco.getImagePipeline().resume();
+            } else {
+                Fresco.getImagePipeline().pause();
+            }
+        }
+    };
+
+    protected final void post(Runnable action) {
+        AppUtils.post(action);
+    }
+
+    protected final void postDelayed(Runnable action, long delay) {
+        AppUtils.postDelay(action, delay);
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+        recyclerView.addOnScrollListener(mOnScrollListener);
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        recyclerView.removeOnScrollListener(mOnScrollListener);
+        super.onDetachedFromRecyclerView(recyclerView);
+    }
+
     protected final void toActivity(@NonNull Class<? extends Activity> clazz, @Nullable Bundle bundle) {
         toActivity(clazz, bundle, null);
+
     }
 
     protected final void toActivity(@NonNull Class<? extends Activity> clazz, @Nullable Bundle bundle, @Nullable Uri data) {
@@ -65,8 +95,9 @@ public abstract class BaseRecyclerAdapter<T, V extends BaseRecyclerAdapter.BaseV
         if (null != data) {
             intent.setData(data);
         }
-
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
         mContext.startActivity(intent);
+
     }
 
     //如果已经登陆，跳转指定Activity 否则跳转到登陆
@@ -81,44 +112,32 @@ public abstract class BaseRecyclerAdapter<T, V extends BaseRecyclerAdapter.BaseV
 
     protected final void toLogin(@NonNull Runnable action) {
         if (Base.getDelegate().isLogin()) {
-            AppTool.post(action);
+            AppUtils.post(action);
         } else {
-            Bundle bundle = new Bundle();
-            bundle.putBoolean("isLogin", true);
-            toActivity(Base.getDelegate().getLoginActivity(), bundle);
-//            String operate;
-//            if (args == null || args.length == 0) {
-//                operate = "操作";
-//            } else {
-//                operate = args[0];
-//            }
-//            AlertDialog.newBuilder(mContext)
-//                    .setCancelable(false)
-//                    .setTitle(R.string.title_dialog)
-//                    .setMessage("登录后才可以" + operate + ",是否继续?")
-//                    .setPositiveButton(R.string.yes, (dialog, which) -> {
-//                        toActivity(LoginActivity.class);
-//                        dialog.cancel();
-//                    })
-//                    .setNegativeButton(R.string.no, (dialog, which) -> dialog.cancel())
-//                    .show();
-
+            toActivity(Base.getDelegate().getLoginActivity());
         }
     }
 
-
     public void reset(@NonNull List<T> data) {
-        mLastPosition = -1;
         mData.clear();
         mData.addAll(data);
-        notifyDataSetChanged();
+
+        if (!BaseUtils.isMarshmallow()) {
+            post(this::notifyDataSetChanged);
+        } else {
+            postDelayed(this::notifyDataSetChanged, 500);
+        }
     }
 
-    public void reset(@NonNull Collection<T> data) {
-        mLastPosition = -1;
+    public void reset(@NonNull Collection<? extends T> data) {
         mData.clear();
         mData.addAll(data);
-        notifyDataSetChanged();
+
+        if (!BaseUtils.isMarshmallow()) {
+            post(this::notifyDataSetChanged);
+        } else {
+            postDelayed(this::notifyDataSetChanged, 500);
+        }
     }
 
     public void reset(@NonNull T[] data) {
@@ -127,37 +146,50 @@ public abstract class BaseRecyclerAdapter<T, V extends BaseRecyclerAdapter.BaseV
 
     public void addData(@NonNull List<T> data) {
         mData.addAll(data);
-        notifyDataSetChanged();
+        post(() -> notifyItemRangeInserted(mData.size() - data.size(), data.size()));
     }
 
     public void addData(@NonNull Collection<T> data) {
         mData.addAll(data);
-        notifyDataSetChanged();
+        post(() -> notifyItemRangeInserted(mData.size() - data.size(), data.size()));
     }
 
     public void addData(@NonNull T[] data) {
         addData(Arrays.asList(data));
     }
 
-    public void addItem(T t) {
-        mData.add(t);
-        notifyItemInserted(mData.size() - 1);
+    public void addData(int index, @NonNull List<T> data) {
+        mData.addAll(index, data);
+        post(() -> notifyItemRangeInserted(index, data.size()));
+//        notifyDataSetChanged();
     }
 
-    public void changeItem(int position, T t) {
-        mData.set(position, t);
-        notifyItemChanged(position);
+    public void addData(int index, @NonNull Collection<T> data) {
+        mData.addAll(index, data);
+        post(() -> notifyItemRangeInserted(index, data.size()));
+//        notifyDataSetChanged();
+    }
+
+    public void addData(int index, @NonNull T[] data) {
+        addData(index, Arrays.asList(data));
+    }
+
+    public void addItem(T t) {
+        mData.add(t);
+        post(() -> notifyItemInserted(mData.size() - 1));
     }
 
     public void addItem(T t, int position) {
         mData.add(position, t);
-        notifyItemInserted(position);
+        post(() -> notifyItemInserted(position));
     }
 
     public void deleteItem(int position) {
         mData.remove(position);
-        notifyItemRemoved(position);
-        notifyItemRangeChanged(position, mData.size() - position);
+        post(() -> {
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, mData.size() - position);
+        });
     }
 
     public T getFirst() {
@@ -172,15 +204,17 @@ public abstract class BaseRecyclerAdapter<T, V extends BaseRecyclerAdapter.BaseV
         return mData.get(position);
     }
 
+    public void changeItem(int position, T item) {
+        mData.set(position, item);
+        post(() -> notifyItemChanged(position));
+    }
+
     @NonNull
     @Override
     public V onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (null == mContext) mContext = parent.getContext();
-
         View view = LayoutInflater.from(mContext).inflate(getLayoutByType(viewType), parent, false);
-        V holder = createViewHolder(view, viewType);
-        holder.setViewType(viewType);
-        return holder;
+        return createViewHolder(view, viewType);
     }
 
     @NonNull
@@ -203,71 +237,32 @@ public abstract class BaseRecyclerAdapter<T, V extends BaseRecyclerAdapter.BaseV
         return mData.size();
     }
 
-    protected BaseAnimation mSelectAnimation = new AlphaInAnimation();
-
-    /**
-     * 添加动画
-     *
-     * @param holder ViewHolder
-     */
-    public void addAnimation(V holder) {
-        if (isOpenAnimation()) {
-            if (holder.getLayoutPosition() > mLastPosition) {
-                for (Animator animator : mSelectAnimation.getAnimators(holder.itemView)) {
-                    startAnim(animator);
-                }
-                mLastPosition = holder.getLayoutPosition();
-            }
-        }
-    }
-
-    protected boolean isOpenAnimation() {
-        return false;
-    }
-
-    /**
-     * 开启动画
-     *
-     * @param animator 动画
-     */
-    private void startAnim(Animator animator) {
-        animator.setDuration(mDuration).start();
-        animator.setInterpolator(mInterpolator);
-    }
 
     public boolean isEmpty() {
         return mData.isEmpty();
     }
 
-    public void clear() {
+    public final void clear() {
         mData.clear();
-        notifyDataSetChanged();
+        if (!BaseUtils.isMarshmallow()) {
+            post(this::notifyDataSetChanged);
+        } else {
+            postDelayed(this::notifyDataSetChanged, 500);
+        }
     }
 
+
     public abstract class BaseViewHolder extends RecyclerView.ViewHolder {
-        private int viewType;
-        protected final View itemView;
-
-        public int getViewType() {
-            return viewType;
-        }
-
-        public void setViewType(int viewType) {
-            this.viewType = viewType;
-        }
+        public final View itemView;
 
         public BaseViewHolder(View itemView) {
             super(itemView);
             this.itemView = itemView;
-            mUnbinders.add(ButterKnife.bind(this, itemView));
+            ButterKnife.bind(this, itemView);
         }
 
         public abstract void bind();
     }
 
-    public final void unbind() {
-        for (Unbinder unbinder : mUnbinders) {
-            unbinder.unbind();
-        }
-    }
+
 }

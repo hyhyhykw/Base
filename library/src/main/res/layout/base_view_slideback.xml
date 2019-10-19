@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.xx.library.view.SlideBackView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@id/base_slide_view"
+    android:layout_width="25dp"
+    android:layout_height="200dp"/>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="base_iv_left" type="id" />
+    <item name="base_tv_title" type="id" />
+    <item name="base_iv_right" type="id" />
+    <item name="base_tv_right" type="id" />
+    <item name="base_lyt_stub" type="id" />
+    <item name="base_slide_container" type="id" />
+    <item name="base_slide_view" type="id" />
+</resources>

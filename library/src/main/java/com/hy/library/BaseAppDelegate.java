@@ -12,36 +12,13 @@ public interface BaseAppDelegate {
     //
     boolean isLogin();
 
+    //登陆页
     Class<? extends Activity> getLoginActivity();
-
-    //启动页
-    Class<? extends Activity> getLaunchActivity();
 
     //
     Context getContext();
 
-    //获取基础接口地址
-    String getBaseUrl();
-
-    //初始化
-    void init();
-
-    //Oss
-    String getEndPoint();
-
-    String getDomain();
-
-    String getBucket();
-
-    String getAliyunAccessKey();
-
-    String getAliyunAccessKeySecret();
-
-    //Aes
-    String getAesCipherMode();
-
-    String getAesKey();
-
-    String getAesIv();
-
+    default boolean debug() {
+        return true;
+    }
 }

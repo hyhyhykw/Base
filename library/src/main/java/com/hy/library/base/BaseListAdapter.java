@@ -5,35 +5,34 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import com.hy.library.Base;
-import com.hy.library.utils.AppTool;
+import com.hy.utils.AppUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import butterknife.ButterKnife;
-import butterknife.Unbinder;
 
 /**
  * Created time : 2018/4/3 10:46.
  *
  * @author HY
  */
+@SuppressWarnings({"unused", "WeakerAccess", "SameParameterValue", "unchecked"})
 public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolder> extends BaseAdapter {
 
     protected final List<T> mData = new ArrayList<>();
 
-    private final ArrayList<Unbinder> mUnbinders = new ArrayList<>();
 
     protected Context mContext;
 
@@ -59,39 +58,20 @@ public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolde
     }
 
     //如果已经登陆，跳转指定Activity 否则跳转到登陆
-    protected final void toLogin(@NonNull Class<? extends Activity> clazz, String... args) {
-        toLogin(clazz, null, args);
+    protected final void toLogin(@NonNull Class<? extends Activity> clazz) {
+        toLogin(clazz, null);
     }
 
     //如果已经登陆，跳转指定Activity 否则跳转到登陆 携带参数
-    protected final void toLogin(@NonNull Class<? extends Activity> clazz, @Nullable Bundle bundle, String... args) {
-        toLogin(() -> toActivity(clazz, bundle), args);
+    protected final void toLogin(@NonNull Class<? extends Activity> clazz, @Nullable Bundle bundle) {
+        toLogin(() -> toActivity(clazz, bundle));
     }
 
-    protected final void toLogin(@NonNull Runnable action, String... args) {
+    protected final void toLogin(@NonNull Runnable action) {
         if (Base.getDelegate().isLogin()) {
-            AppTool.post(action);
+            post(action);
         } else {
-            Bundle bundle = new Bundle();
-            bundle.putBoolean("isLogin", true);
-            toActivity(Base.getDelegate().getLoginActivity(), bundle);
-//            String operate;
-//            if (args == null || args.length == 0) {
-//                operate = "操作";
-//            } else {
-//                operate = args[0];
-//            }
-//            AlertDialog.newBuilder(mContext)
-//                    .setCancelable(false)
-//                    .setTitle(R.string.title_dialog)
-//                    .setMessage("登录后才可以" + operate + ",是否继续?")
-//                    .setPositiveButton(R.string.yes, (dialog, which) -> {
-//                        toActivity(LoginActivity.class);
-//                        dialog.cancel();
-//                    })
-//                    .setNegativeButton(R.string.no, (dialog, which) -> dialog.cancel())
-//                    .show();
-
+            toActivity(Base.getDelegate().getLoginActivity());
         }
     }
 
@@ -121,6 +101,13 @@ public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolde
         notifyDataSetChanged();
     }
 
+    protected final void post(Runnable action) {
+        AppUtils.post(action);
+    }
+
+    protected final void postDelayed(Runnable action, long delay) {
+        AppUtils.postDelay(action, delay);
+    }
 
     public void addData(@NonNull T[] data) {
         addData(Arrays.asList(data));
@@ -136,6 +123,21 @@ public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolde
         notifyDataSetChanged();
     }
 
+    public void setItem(T t, int position) {
+        mData.set(position, t);
+        notifyDataSetChanged();
+    }
+
+
+    public void deleteItem(T t) {
+        mData.remove(t);
+        notifyDataSetChanged();
+    }
+
+    public void deleteItem(int position) {
+        mData.remove(position);
+        notifyDataSetChanged();
+    }
 
     public T getFirst() {
         return mData.get(0);
@@ -148,6 +150,10 @@ public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolde
     @Override
     public int getCount() {
         return mData.size();
+    }
+
+    public List<T> getData() {
+        return mData;
     }
 
     @Override
@@ -171,7 +177,6 @@ public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolde
             holder = createViewHolder(convertView);
             convertView.setTag(holder);
         } else {
-            //noinspection SingleStatementInBlock,unchecked
             holder = (V) convertView.getTag();
         }
 
@@ -180,7 +185,6 @@ public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolde
     }
 
 
-    @NonNull
     protected abstract V createViewHolder(View itemView);
 
     @LayoutRes
@@ -188,22 +192,15 @@ public abstract class BaseListAdapter<T, V extends BaseListAdapter.BaseViewHolde
 
 
     public abstract class BaseViewHolder {
-        public final View itemView;
+        protected final View itemView;
 
         public BaseViewHolder(View itemView) {
             this.itemView = itemView;
-            mUnbinders.add(ButterKnife.bind(this, itemView));
+            ButterKnife.bind(this,itemView);
         }
 
         protected abstract void bind(int position);
     }
 
-
-    public final void unbind() {
-        for (Unbinder unbinder : mUnbinders) {
-            unbinder.unbind();
-        }
-
-    }
 
 }

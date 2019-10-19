@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <declare-styleable name="BoldTextView" tools:ignore="ResourceName">
+        <attr name="base_btv_stroke_width" format="float" />
+    </declare-styleable>
+
+    <style name="BaseTe" parent="Theme.AppCompat.Light">
+        <item name="actionBarSize">45dp</item>
+        <item name="android:navigationIcon">@android:drawable/ic_menu_close_clear_cancel</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="colorPrimary">@android:color/white</item>
+        <item name="android:colorPrimary">@android:color/white</item>
+        <item name="colorPrimaryDark">@android:color/white</item>
+        <item name="android:colorPrimaryDark">@android:color/white</item>
+    </style>
+</resources>
